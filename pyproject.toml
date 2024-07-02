@@ -3,8 +3,8 @@ requires = ["astropy",
             "corv",
             "numpy",
             "scipy",
-            "setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+            "hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "spectromancer"
