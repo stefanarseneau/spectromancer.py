@@ -116,7 +116,7 @@ class Observation:
 
             for i, target in enumerate(self.targets):
                 path = self.path + 'rv_plots/' + target.name + '.png'
-                target.plot(model, rvs[i,3].params, path)
+                target.plot(model, rvs[i,4].params, path)
 
         if save_column:
             # if save column, add it to the observation table
