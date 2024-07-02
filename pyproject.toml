@@ -1,10 +1,6 @@
 [build-system]
-requires = ["astropy",
-            "corv",
-            "numpy",
-            "scipy",
-            "hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61.0", "corv", "numpy", "astropy"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "spectromancer"
@@ -21,9 +17,6 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
-[tool.setuptools.packages.find]
-exclude = ["caches*"]
-
 [project.urls]
-Homepage = "https://github.com/stefanarseneau/wdphoto"
-Issues = "https://github.com/stefanarseneau/wdphoto/issues"
+Homepage = "https://github.com/stefanarseneau/spectromancer.py"
+Issues = "https://github.com/stefanarseneau/spectromancer.py/issues"
