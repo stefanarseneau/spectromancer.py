@@ -121,7 +121,7 @@ class Observation:
             # if save column, add it to the observation table
             self.table['rv'] = rvs[:,0] 
             self.table['e_rv'] = rvs[:,1]
-            self.table['chisqr'] = rvs[:,3]
+            self.table['chisqr'] = rvs[:,2]
         return rvs
 
     def write(self, outfile, **kwargs):
