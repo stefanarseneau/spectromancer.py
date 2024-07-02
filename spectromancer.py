@@ -55,7 +55,11 @@ class Target:
     def __init__(self, name, path):
         self.name = name # save the name of the target
         self.exp_paths = glob.glob(path + '/*.fits') # find all the fits files in the directory
-        self.exp_spectra = [Spectrum(self.read_file(path)) for path in self.exp_paths] # read in the spectra for each coadd
+        
+        self.exp_spectra = []
+        for path in self.exp_paths:
+            wl, fl, ivar = self.read_file(path)
+            self.exp_spectra.append(Spectrum(wl, fl, ivar)) # read in the spectra for each coadd
 
         # perform a coadd by summing the spectra
         self.spectrum = self.exp_spectra[0] # set the spectrum to the first exposure
@@ -81,7 +85,7 @@ class Target:
     def fit_rv(self, model, plot=False):
         rv, e_rv, redchi, param_res = self.spectrum.fit_rv(model)
         if plot:
-            self.spectrum.plot(model, param_res)
+            self.spectrum.plot(model, param_res.params)
         return rv, e_rv, redchi, param_res
         
 
@@ -104,8 +108,10 @@ class Observation:
         self.paths = [path + name for name in self.table['name']] # build paths to each target
         self.targets = [Target(name, path) for name, path in zip(self.table['name'], self.paths)] # create the target object
 
-    def fit_rvs(self, model, save_column = False, plot = False):
-        rvs = np.array([target.fit_rv(model, plot) for target in tqdm(self.targets)]) # measure the rvs for each target
+    def fit_rvs(self, model, save_column = False, verbose=False):
+        if verbose:
+            print('Measuring RVs')
+        rvs = np.array([target.fit_rv(model, verbose) for target in tqdm(self.targets)]) # measure the rvs for each target
 
         if save_column:
             # if save column, add it to the observation table
@@ -114,16 +120,25 @@ class Observation:
             self.table['chisqr'] = rvs[:,3]
         return rvs
 
+    def write(self, outfile, **kwargs):
+        self.table.write(outfile, **kwargs)
+
 if __name__ == '__main__':
     # read in the arguments from the cli
-    parser = argparse.ArgumentParser()
-    parser.add_argument("path", default=None)
-    parser.add_argument('-v', '--verbose', action='store_true')
+    parser = argparse.ArgumentParser(prog='spectromancer.py',
+                    description='spectromancer.py is a wizard for managing MAGE spectrum observations of white dwarfs')
+    parser.add_argument("path", help='path to the observation folder')
+    parser.add_argument('--measure-rvs', default=False, action='store_true', help='append RVs to the observation table?')
+    parser.add_argument('-o', '--outfile', nargs='?', default=None, help='file to which to write the observation table')
+    parser.add_argument('-v', '--verbose', action='store_true', help='display plots?')
     args = parser.parse_args()
 
     model = corv.models.make_balmer_model(nvoigt=2)
-    test = Observation(args.path)
+    observation = Observation(args.path)
 
-    if args.verbose:
-        print(test.fit_rvs(model, plot=True))
-    print(test.fit_rvs(model))
+    if args.measure_rvs:
+        observation.fit_rvs(model, verbose=args.verbose)
+
+    if args.outfile is not None:
+        observation.write(args.outfile)
+    
