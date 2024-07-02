@@ -79,7 +79,8 @@ class Target:
 
     def fit_rv(self, model):
         rv, e_rv, redchi, param_res = self.spectrum.fit_rv(model)
-        return rv, e_rv, redchi, param_res
+        rv_spread = np.std([spec.fit_rv(model)[0] for spec in self.exp_spectra])
+        return rv, e_rv, redchi, rv_spread, param_res
     
     def plot(self, model, params, path, printparams=False):
         f = corv.utils.lineplot(self.spectrum.wave, self.spectrum.flux, self.spectrum.ivar, model, params, printparams=printparams)
@@ -122,6 +123,7 @@ class Observation:
             self.table['rv'] = rvs[:,0] 
             self.table['e_rv'] = rvs[:,1]
             self.table['chisqr'] = rvs[:,2]
+            self.table['rv_spread'] = rvs[:,3]
         return rvs
 
     def write(self, outfile, **kwargs):
