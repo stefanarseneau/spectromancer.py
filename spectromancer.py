@@ -17,9 +17,6 @@ class Spectrum:
 
     def fit_rv(self, model):
         return corv.fit.fit_corv(self.wave, self.flux, self.ivar, model)
-    
-    def plot(self, model, params):
-        corv.utils.lineplot(self.wave, self.flux, self.ivar, model, params)
 
     def spectrum_coadd(self, other):
         # interpolate the other spectrum onto a consistent wavelength grid
@@ -81,12 +78,13 @@ class Target:
         
         return wave, fl, ivar
 
-
-    def fit_rv(self, model, plot=False):
+    def fit_rv(self, model):
         rv, e_rv, redchi, param_res = self.spectrum.fit_rv(model)
-        if plot:
-            self.spectrum.plot(model, param_res.params)
         return rv, e_rv, redchi, param_res
+    
+    def plot(self, model, params, path, printparams=False):
+        f = corv.utils.lineplot(self.spectrum.wave, self.spectrum.flux, self.spectrum.ivar, model, params, printparams=printparams)
+        f.savefig(path)
         
 
 class Observation:
@@ -104,24 +102,34 @@ class Observation:
             coaddn
     """
     def __init__(self, path):
-        self.table = Table.read(path+'obsfile.csv') # read the observation file
+        self.path = path
+        self.table = Table.read(self.path+'obsfile.csv') # read the observation file
         self.paths = [path + name for name in self.table['name']] # build paths to each target
         self.targets = [Target(name, path) for name, path in zip(self.table['name'], self.paths)] # create the target object
 
     def fit_rvs(self, model, save_column = False, verbose=False):
+        rvs = np.array([target.fit_rv(model) for target in tqdm(self.targets)]) # measure the rvs for each target
+
         if verbose:
-            print('Measuring RVs')
-        rvs = np.array([target.fit_rv(model, verbose) for target in tqdm(self.targets)]) # measure the rvs for each target
+            if not os.path.isdir(self.path + 'rv_plots/'):
+                os.makedirs(self.path + 'rv_plots/')
+
+            for i, target in enumerate(self.targets):
+                path = self.path + 'rv_plots/' + target.name + '.png'
+                print(path)
+                target.plot(model, rvs[i,3].params, path)
+
+        print(rvs[0,3])
 
         if save_column:
             # if save column, add it to the observation table
             self.table['rv'] = rvs[:,0] 
             self.table['e_rv'] = rvs[:,1]
-            self.table['chisqr'] = rvs[:,3]
+            self.table['chisqr'] = rvs[:,3].redchi
         return rvs
 
     def write(self, outfile, **kwargs):
-        self.table.write(outfile, **kwargs)
+        self.table.write(outfile, overwrite=True, **kwargs)
 
 if __name__ == '__main__':
     # read in the arguments from the cli
@@ -137,7 +145,7 @@ if __name__ == '__main__':
     observation = Observation(args.path)
 
     if args.measure_rvs:
-        observation.fit_rvs(model, verbose=args.verbose)
+        observation.fit_rvs(model, save_column=True, verbose=args.verbose)
 
     if args.outfile is not None:
         observation.write(args.outfile)
