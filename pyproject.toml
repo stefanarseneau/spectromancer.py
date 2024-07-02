@@ -2,6 +2,10 @@
 requires = ["setuptools>=61.0", "corv", "numpy", "astropy"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.packages.find]
+include = ["spectromancer*"]
+exclude = ["observations*"]
+
 [project]
 name = "spectromancer"
 version = "0.1"
@@ -16,6 +20,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+
+[project.scripts]
+hello-world = "timmins:hello_world"
 
 [project.urls]
 Homepage = "https://github.com/stefanarseneau/spectromancer.py"
