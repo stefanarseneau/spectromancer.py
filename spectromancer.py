@@ -116,16 +116,13 @@ class Observation:
 
             for i, target in enumerate(self.targets):
                 path = self.path + 'rv_plots/' + target.name + '.png'
-                print(path)
                 target.plot(model, rvs[i,3].params, path)
-
-        print(rvs[0,3])
 
         if save_column:
             # if save column, add it to the observation table
             self.table['rv'] = rvs[:,0] 
             self.table['e_rv'] = rvs[:,1]
-            self.table['chisqr'] = rvs[:,3].redchi
+            self.table['chisqr'] = rvs[:,3]
         return rvs
 
     def write(self, outfile, **kwargs):
@@ -141,7 +138,7 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbose', action='store_true', help='display plots?')
     args = parser.parse_args()
 
-    model = corv.models.make_balmer_model(nvoigt=2)
+    model = corv.models.make_warwick_da_model(names=['a','b','g','d'])
     observation = Observation(args.path)
 
     if args.measure_rvs:
